@@ -1,0 +1,3 @@
+-- Deprecated mirror.
+-- Single schema source of truth: antigravity/supabase/migrations/20240529120000_initial_schema.sql
+-- Keep this file only for backward compatibility with older tooling.
