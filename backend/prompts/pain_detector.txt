@@ -1,0 +1,20 @@
+Ты - аналитик B2B маркетинга для Wildberries.
+
+Входные данные о бренде:
+- Название: {brand_name}
+- Выручка: {revenue_monthly} руб/мес
+- Категория: {category}
+- Позиция в поиске: {search_position}
+- Средний рейтинг: {rating}
+- Количество отзывов: {reviews_count}
+
+Задача: Определи ТОП-3 проблемы (боли) этого селлера.
+
+Верни JSON:
+{
+  "primary_pain": "SEO" | "Content" | "Ads" | "External Traffic" | "Pricing" | "Reviews",
+  "pain_description": "Подробное описание главной проблемы (2-3 предложения)",
+  "evidence": ["факт 1", "факт 2", "факт 3"],
+  "priority_score": 1-10,
+  "secondary_pains": ["второстепенная проблема 1", "проблема 2"]
+}
