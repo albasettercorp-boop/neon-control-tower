@@ -24,6 +24,36 @@ export const ParserModal: React.FC<ParserModalProps> = ({ isOpen, onClose, proje
     const [resultCount, setResultCount] = useState(0);
     const channelRef = useRef<any>(null);
 
+    const applyJobStatus = (job: any) => {
+        if (!job) return;
+
+        if (job.status === 'processing') {
+            setProgress((prev) => Math.max(prev, 50));
+            return;
+        }
+
+        if (job.status === 'completed') {
+            setProgress(100);
+            setResultCount(job.result_count || 0);
+            setStatus('success');
+            setLoading(false);
+
+            setTimeout(() => {
+                onClose();
+                setStatus('idle');
+                setProgress(0);
+                setCurrentJobId(null);
+            }, 3000);
+            return;
+        }
+
+        if (job.status === 'failed') {
+            setStatus('error');
+            setLoading(false);
+            setProgress(0);
+        }
+    };
+
     // Realtime subscription for parser_jobs updates
     useEffect(() => {
         if (!currentJobId || sandboxMode) return;
@@ -38,35 +68,29 @@ export const ParserModal: React.FC<ParserModalProps> = ({ isOpen, onClose, proje
                     table: 'parser_jobs',
                     filter: `id=eq.${currentJobId}`
                 },
-                (payload) => {
-                    const job = payload.new as any;
-
-                    if (job.status === 'processing') {
-                        setProgress(50);
-                    } else if (job.status === 'completed') {
-                        setProgress(100);
-                        setResultCount(job.result_count || 0);
-                        setStatus('success');
-                        setLoading(false);
-
-                        setTimeout(() => {
-                            onClose();
-                            setStatus('idle');
-                            setProgress(0);
-                            setCurrentJobId(null);
-                        }, 3000);
-                    } else if (job.status === 'failed') {
-                        setStatus('error');
-                        setLoading(false);
-                        setProgress(0);
-                    }
-                }
+                (payload) => applyJobStatus(payload.new as any)
             )
             .subscribe();
 
         channelRef.current = channel;
 
+        const pollJob = async () => {
+            try {
+                const { data } = await (supabase.from('parser_jobs') as any)
+                    .select('id,status,result_count,error_log')
+                    .eq('id', currentJobId)
+                    .single();
+                applyJobStatus(data);
+            } catch (error) {
+                console.error('Parser job polling failed:', error);
+            }
+        };
+
+        pollJob();
+        const pollTimer = setInterval(pollJob, 3000);
+
         return () => {
+            clearInterval(pollTimer);
             channel.unsubscribe();
         };
     }, [currentJobId, sandboxMode, onClose]);

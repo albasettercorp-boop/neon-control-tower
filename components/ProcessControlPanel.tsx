@@ -77,6 +77,9 @@ export const ProcessControlPanel: React.FC<ProcessControlPanelProps> = ({ projec
     const [commands, setCommands] = useState<Record<string, WorkerCommand>>({});
     const [loadingActions, setLoadingActions] = useState<Set<CommandAction>>(new Set());
 
+    const killSwitchCommand = commands.kill_switch;
+    const killSwitchActive = Boolean(killSwitchCommand?.result?.active ?? killSwitchCommand?.params?.enabled);
+
     const fetchLatestCommands = useCallback(async () => {
         try {
             const { data } = await (supabase.from('worker_commands') as any)
@@ -118,8 +121,14 @@ export const ProcessControlPanel: React.FC<ProcessControlPanelProps> = ({ projec
             const params: Record<string, any> = {};
             if (projectId) params.project_id = projectId;
             if (action === 'kill_switch') {
-                params.enabled = true;
-                params.reason = 'Triggered from dashboard control panel';
+                const enable = !killSwitchActive;
+                params.enabled = enable;
+                params.reason = enable
+                    ? 'Triggered from dashboard control panel'
+                    : 'Deactivated from dashboard control panel';
+            } else if (killSwitchActive) {
+                alert('Kill Switch активен. Сначала отключите его.');
+                return;
             }
 
             const { data, error } = await (supabase.from('worker_commands') as any)
@@ -169,19 +178,29 @@ export const ProcessControlPanel: React.FC<ProcessControlPanelProps> = ({ projec
                     const isLoading = loadingActions.has(proc.action);
                     const isActive = latestCmd && (latestCmd.status === 'pending' || latestCmd.status === 'processing');
                     const statusInfo = latestCmd ? getStatusInfo(latestCmd.status) : null;
+                    const blockedByKillSwitch = killSwitchActive && proc.action !== 'kill_switch';
+                    const buttonDisabled = isLoading || isActive || blockedByKillSwitch;
+                    const killLabel = proc.action === 'kill_switch'
+                        ? (killSwitchActive ? 'Kill Switch ON' : 'Kill Switch OFF')
+                        : proc.label;
+                    const killDescription = proc.action === 'kill_switch'
+                        ? (killSwitchActive ? 'Нажмите для разблокировки' : 'Остановить automation')
+                        : proc.description;
 
                     return (
                         <motion.button
                             key={proc.action}
                             onClick={() => handleRunProcess(proc.action)}
-                            disabled={isLoading || isActive}
+                            disabled={buttonDisabled}
                             whileHover={{ scale: isActive ? 1 : 1.02 }}
                             whileTap={{ scale: isActive ? 1 : 0.98 }}
                             className={`
                 relative p-3 rounded-xl border backdrop-blur-sm text-left transition-all
                 ${isActive
                                     ? 'bg-white/5 border-white/20 cursor-wait'
-                                    : 'bg-slate-900/40 border-white/5 hover:border-white/20 cursor-pointer'
+                                    : blockedByKillSwitch
+                                        ? 'bg-slate-900/30 border-amber-500/20 cursor-not-allowed'
+                                        : 'bg-slate-900/40 border-white/5 hover:border-white/20 cursor-pointer'
                                 }
                 disabled:opacity-60
               `}
@@ -197,8 +216,8 @@ export const ProcessControlPanel: React.FC<ProcessControlPanelProps> = ({ projec
                                 )}
                             </div>
 
-                            <div className="text-sm font-medium text-white mb-0.5">{proc.label}</div>
-                            <div className="text-[10px] text-slate-500">{proc.description}</div>
+                            <div className="text-sm font-medium text-white mb-0.5">{killLabel}</div>
+                            <div className="text-[10px] text-slate-500">{killDescription}</div>
 
                             {/* Status bar */}
                             <AnimatePresence>
@@ -214,6 +233,9 @@ export const ProcessControlPanel: React.FC<ProcessControlPanelProps> = ({ projec
                                         </span>
                                         {latestCmd.error && (
                                             <p className="text-[9px] text-red-400/80 mt-1 line-clamp-2">{latestCmd.error}</p>
+                                        )}
+                                        {latestCmd.result?.message && !latestCmd.error && (
+                                            <p className="text-[9px] text-slate-400 mt-1 line-clamp-2">{String(latestCmd.result.message)}</p>
                                         )}
                                     </motion.div>
                                 )}

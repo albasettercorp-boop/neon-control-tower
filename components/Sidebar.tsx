@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Command, MoreVertical } from 'lucide-react';
+import { Plus, Command, MoreVertical, Calendar } from 'lucide-react';
 import { Client } from '../types';
 import { motion } from 'framer-motion';
 
@@ -9,9 +9,10 @@ interface SidebarProps {
    onClientSelect: (id: string) => void;
    onAddClient: () => void;
    onStartParsing: () => void;
+   onBookingQueue?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ clients, activeClientId, onClientSelect, onAddClient, onStartParsing }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ clients, activeClientId, onClientSelect, onAddClient, onStartParsing, onBookingQueue }) => {
    return (
       <div className="w-full md:w-72 h-full flex flex-col glass-panel rounded-2xl border-r border-white/5 relative overflow-hidden">
          {/* Header */}
@@ -79,6 +80,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ clients, activeClientId, onCli
                <Command size={12} className="text-neon-purple" />
                COMMAND CENTER
             </button>
+            {onBookingQueue && (
+               <button
+                  onClick={onBookingQueue}
+                  className="w-full py-2 px-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg text-xs font-medium text-cyan-400 hover:text-white hover:bg-cyan-500/20 hover:border-cyan-500/40 transition-all flex items-center justify-center gap-2 group"
+               >
+                  <Calendar size={12} className="text-cyan-400" />
+                  BOOKING QUEUE
+               </button>
+            )}
             <p className="text-[10px] text-slate-600 font-mono">CLIENT MANAGER V2.1</p>
          </div>
       </div>

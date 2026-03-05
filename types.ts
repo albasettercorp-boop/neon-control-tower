@@ -79,8 +79,15 @@ export interface Seller {
   project_id?: string;
   variant?: 'A' | 'B';
   created_at?: string;
+  updated_at?: string;
   source?: 'WB_API' | 'TG_CHAT' | 'VK' | 'INSTAGRAM';
   pain_points?: string[];
+  contact_name?: string;
+  phone?: string;
+  email?: string;
+  telegram_username?: string;
+  wb_brand_id?: string;
+  wb_product_id?: string;
 }
 
 export interface ParserJob {

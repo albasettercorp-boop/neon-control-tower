@@ -26,6 +26,7 @@ import { HealthDashboard } from './components/HealthDashboard';
 import { SmartFunnelControl } from './components/SmartFunnelControl';
 import { ProcessControlPanel } from './components/ProcessControlPanel';
 import { SystemLogsPanel } from './components/SystemLogsPanel';
+import { BookingQueue } from './components/BookingQueue';
 
 const DEFAULT_SOURCES: Source[] = [
   { id: '1', platform: 'TG_CHAT', name: 'Telegram Communities', total: 0, processed: 0, active: true },
@@ -42,7 +43,7 @@ const DEFAULT_HOOKS: Hook[] = [
 const DEFAULT_ZOOMS: ZoomCall[] = [];
 
 function App() {
-  const [activeView, setActiveView] = useState<'dashboard' | 'sources' | 'hooks' | 'chats' | 'zooms'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'sources' | 'hooks' | 'chats' | 'zooms' | 'bookings'>('dashboard');
   const [clients, setClients] = useState<Client[]>([]);
   const [activeClientId, setActiveClientId] = useState<string>('');
 
@@ -480,6 +481,7 @@ function App() {
           onClientSelect={setActiveClientId}
           onAddClient={() => setIsAddClientOpen(true)}
           onStartParsing={() => setIsParserModalOpen(true)}
+          onBookingQueue={() => setActiveView('bookings')}
         />
       </div>
 
@@ -555,7 +557,7 @@ function App() {
         </header>
 
         <div
-          className={`flex-1 flex flex-col gap-3 min-h-0 transition-all duration-500 ${currentClient?.status === 'paused' ? 'grayscale opacity-70 pointer-events-none select-none' : ''}`}
+          className={`flex-1 flex flex-col gap-3 min-h-0 transition-all duration-500 ${currentClient?.status === 'paused' ? 'grayscale opacity-70' : ''}`}
         >
           {activeView === 'dashboard' ? (
             <>
@@ -573,6 +575,7 @@ function App() {
                   hooks={hooks}
                   chats={chats}
                   zooms={zooms}
+                  sellers={sellers}
                   qualifiedCount={stageStats.qualifiedCount}
                   repliedCount={stageStats.repliedCount}
                   convertedCount={stageStats.convertedCount}
@@ -595,6 +598,10 @@ function App() {
                 </GlassCard>
               </div>
             </>
+          ) : activeView === 'bookings' ? (
+            <div className="flex-1 h-full min-h-0">
+              <BookingQueue />
+            </div>
           ) : (
             <div className="flex-1 h-full min-h-0">
               <DrillDownTable
